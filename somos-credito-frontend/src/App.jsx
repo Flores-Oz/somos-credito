@@ -1,7 +1,11 @@
 // src/App.jsx
 import { useEffect, useState } from "react";
+import "./App.css";
+
 import SucursalForm from "./components/SucursalForm";
 import SucursalTable from "./components/SucursalTable";
+import SucursalFilters from "./components/SucursalFilters";
+
 import {
   getSucursales,
   createSucursal,
@@ -9,6 +13,8 @@ import {
   deleteSucursal,
   updateEstadoSucursal,
 } from "./services/sucursalesApi";
+import { exportSucursalesPdf } from "./utils/exportPdf";
+
 
 const initialForm = {
   id: null,
@@ -22,14 +28,22 @@ const initialForm = {
   estado: "ACTIVA",
 };
 
+const initialFilters = {
+  texto: "",
+  estado: "TODOS",
+};
+
+const ROWS_PER_PAGE = 5;
+
 function App() {
   const [sucursales, setSucursales] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [filters, setFilters] = useState(initialFilters);
+  const [page, setPage] = useState(1);
 
-  // Cargar sucursales al iniciar
   useEffect(() => {
     cargarSucursales();
   }, []);
@@ -40,6 +54,7 @@ function App() {
       const res = await getSucursales();
       setSucursales(res.data);
       setErrorMsg("");
+      setPage(1);
     } catch (error) {
       console.error(error);
       setErrorMsg("Error al cargar las sucursales.");
@@ -115,8 +130,64 @@ function App() {
     }
   };
 
+  // ----- Filtros + paginación -----
+  const handleFiltersChange = (newFilters) => {
+    setFilters(newFilters);
+    setPage(1); // siempre regresar a la página 1 al filtrar
+  };
+
+  const filtered = sucursales.filter((s) => {
+    const texto = filters.texto.trim().toLowerCase();
+
+    const matchesTexto =
+      texto === "" ||
+      s.nombre.toLowerCase().includes(texto) ||
+      s.municipio.toLowerCase().includes(texto) ||
+      s.departamento.toLowerCase().includes(texto);
+
+    const matchesEstado =
+      filters.estado === "TODOS" || s.estado === filters.estado;
+
+    return matchesTexto && matchesEstado;
+  });
+
+  const totalRows = filtered.length;
+  const startIndex = (page - 1) * ROWS_PER_PAGE;
+  const pageRows = filtered.slice(startIndex, startIndex + ROWS_PER_PAGE);
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+
+  // ----- Exportar a PDF -----
+ const exportarTodoPdf = () => {
+  if (sucursales.length === 0) {
+    alert("No hay sucursales para exportar.");
+    return;
+  }
+
+  exportSucursalesPdf(
+    sucursales,
+    "Sucursales - Listado completo",
+    "sucursales_todas.pdf"
+  );
+};
+
+const exportarFiltradoPdf = () => {
+  if (filtered.length === 0) {
+    alert("No hay resultados filtrados para exportar.");
+    return;
+  }
+
+  exportSucursalesPdf(
+    filtered,
+    "Sucursales - Resultados filtrados",
+    "sucursales_filtradas.pdf"
+  );
+};
+
   return (
-    <div style={{ maxWidth: "1100px", margin: "20px auto", fontFamily: "system-ui" }}>
+    <div className="app-container">
       <h1>Somos Crédito - Gestión de Sucursales</h1>
       <p>
         Administración de sucursales a nivel nacional: ubicación física, teléfono y estado
@@ -124,7 +195,15 @@ function App() {
       </p>
 
       {errorMsg && (
-        <div style={{ backgroundColor: "#ffe5e5", padding: "10px", marginBottom: "10px" }}>
+        <div
+          style={{
+            backgroundColor: "#fee2e2",
+            borderRadius: 4,
+            padding: 8,
+            marginBottom: 10,
+            fontSize: "0.85rem",
+          }}
+        >
           {errorMsg}
         </div>
       )}
@@ -137,10 +216,26 @@ function App() {
         onCancel={limpiarFormulario}
       />
 
-      <h2>Listado de sucursales</h2>
+      <SucursalFilters filters={filters} onChange={handleFiltersChange} />
+
+      <div className="card" style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn btn-secondary" onClick={exportarTodoPdf}>
+            Exportar listado completo (PDF)
+          </button>
+          <button className="btn btn-primary" onClick={exportarFiltradoPdf}>
+            Exportar resultados filtrados (PDF)
+          </button>
+        </div>
+      </div>
+
       <SucursalTable
-        sucursales={sucursales}
+        sucursales={pageRows}
         loading={loading}
+        page={page}
+        rowsPerPage={ROWS_PER_PAGE}
+        totalRows={totalRows}
+        onPageChange={handlePageChange}
         onEditar={editarSucursal}
         onEliminar={eliminarSucursal}
         onCambiarEstado={cambiarEstado}
