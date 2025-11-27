@@ -1,4 +1,3 @@
-// src/hooks/useSucursales.js
 import { useEffect, useMemo, useState } from "react";
 import {
   getSucursales,

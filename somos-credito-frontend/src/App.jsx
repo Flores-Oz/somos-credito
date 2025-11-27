@@ -1,20 +1,13 @@
-// src/App.jsx
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "./App.css";
 
 import SucursalForm from "./components/SucursalForm";
 import SucursalTable from "./components/SucursalTable";
 import SucursalFilters from "./components/SucursalFilters";
 
-import {
-  getSucursales,
-  createSucursal,
-  updateSucursal,
-  deleteSucursal,
-  updateEstadoSucursal,
-} from "./services/sucursalesApi";
+
 import { exportSucursalesPdf } from "./utils/exportPdf";
-import { toastSuccess, toastError, confirmDelete } from "./utils/alerts";
+import { toastSuccess, toastError } from "./utils/alerts";
 import { useSucursales } from "./hooks/useSucursales";
 
 

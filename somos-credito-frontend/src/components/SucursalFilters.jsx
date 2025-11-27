@@ -1,4 +1,3 @@
-// src/components/SucursalFilters.jsx
 function SucursalFilters({ filters, onChange }) {
   const handleChange = (e) => {
     onChange({

@@ -1,5 +1,3 @@
-// src/components/SucursalForm.jsx
-
 function SucursalForm({ form, modoEdicion, onChange, onSubmit, onCancel }) {
   return (
     <div className="card">

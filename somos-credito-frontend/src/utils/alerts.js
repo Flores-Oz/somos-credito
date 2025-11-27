@@ -1,4 +1,3 @@
-// src/utils/alerts.js
 import Swal from "sweetalert2";
 
 export function toastSuccess(title = "Operación exitosa", text = "") {

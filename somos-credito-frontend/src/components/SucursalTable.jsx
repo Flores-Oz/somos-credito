@@ -1,4 +1,3 @@
-// src/components/SucursalTable.jsx
 function SucursalTable({
   sucursales,
   loading,
